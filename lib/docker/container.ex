@@ -44,16 +44,22 @@ defmodule Docker.Container do
     "#{host}/containers/#{container_id}/start"
     |> Client.post_json!(opts)
     |> parse_start_response
+
+
   end
 
   defp parse_start_response(%{status_code: 204}), do: {:ok, :no_error}
-  defp parse_start_response(%{status_code: 304}), do: {:error, :contianer_already_started}
+  defp parse_start_response(%{status_code: 304}), do: {:error, :container_already_started}
   defp parse_start_response(%{status_code: 404}), do: {:error, :no_such_container}
   defp parse_start_response(%{status_code: 500}), do: {:error, :server_error}
 
-  def run(host, opts \\ %{}) do
+  def run(host, opts \\ @default_creation_params) do
     case create(host, opts) do
-      {:ok, %{id: id}} -> start(host, id)
+      {:ok, %{id: id}} -> 
+        case start(host, id) do
+          {:ok, _} -> {:ok, %{id: id}}
+          {:error, reason} -> {:error, :reason}
+        end
       {:error, reason} -> {:error, reason}
     end
   end
