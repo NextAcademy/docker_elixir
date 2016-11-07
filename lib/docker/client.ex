@@ -8,8 +8,11 @@ defmodule Docker.Client do
     end
   end
 
-  def post_json!(url, body \\ %{}) do
-    post!(url, Poison.encode!(body), %{"Content-Type"=>"application/json"})
+  def post_json!(url, body \\ %{}, opts \\ []) do
+    post!( url, Poison.encode!(body), 
+          %{"Content-Type"=>"application/json"},
+          opts
+        )
   end
 
   def add_query_params(url, params) do
