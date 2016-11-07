@@ -28,7 +28,7 @@ defmodule Docker.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, "~> 3.0"}, 
+      {:poison, "~> 2.0"}, 
       {:httpoison, "~> 0.9.0"}
     ]
   end
