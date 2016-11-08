@@ -165,6 +165,35 @@ defmodule Docker.Container do
 
   defp parse_logs_stream_response(%HTTPoison.AsyncResponse{id: _ref}), do: stream_response
 
+  @default_attach_params %{
+    stream: 1,
+    stdin: 1,
+    stdout: 1,
+    stderr: 1
+  }
+
+  # after executing this will open persistent tcp connection to stream stdin/stdout into/from container
+  # receving pid will receive stdout/stderr the the form of
+  # {:hackney_response, _conn, message} when is_binary(message)
+  def attach(host, container_id, receiving_pid, opts \\ @default_attach_params) do
+    "#{host}/containers/#{container_id}/attach"
+    |> Client.add_query_params(opts)
+    |> Client.start_persistent_connection(receiving_pid)
+    |> parse_attach_response
+  end
+
+  defp parse_attach_response({:ok, connRef}), do: {:ok, %{connRef: connRef}}
+  defp parse_attach_response(result), do: {:error, result}
+
+  # obtain socket from attach function
+  def stream_stdin(stdin, connRef) do
+    Client.send_via_raw_tcp(stdin, connRef)
+  end
+
+  def stop_attach(connRef) do
+    Client.close_persistent_connection(connRef)
+  end
+
   defp stream_response(output \\ []) do
     receive do
       %HTTPoison.AsyncChunk{chunk: new_output} -> 
