@@ -64,9 +64,9 @@ defmodule Docker.Container do
     end
   end
 
-  def stop(host, container_id, t \\ 0) do
+  def stop(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/stop"
-    |> Client.add_query_params(%{t: t})
+    |> Client.add_query_params(opts)
     |> Client.post_json!
     |> parse_stop_response 
   end
