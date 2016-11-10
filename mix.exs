@@ -7,9 +7,18 @@ defmodule Docker.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     description: "Api wrapper for Docker API in Elixir",
+     package: package,
      deps: deps()]
   end
 
+  def package do
+    [
+      maintainers: ["Ming Xiang Chan"],
+      licenses: ["GPL"],
+      links: %{"Github" => "https://github.com/NextAcademy/docker_elixir"}
+    ]
+  end
   # Configuration for the OTP application
   #
   # Type "mix help compile.app" for more information
