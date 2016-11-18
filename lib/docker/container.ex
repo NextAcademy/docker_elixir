@@ -26,7 +26,10 @@ defmodule Docker.Container do
       "AttachStdin"  => true,
       "AttachStdout" => true,
       "AttachStderr" => true,
-      "Cmd"          => ["bash"]
+      "Cmd"          => ["bash"],
+      "HostConfig" => %{
+        "CapDrop": ["ALL"]
+      }
   }
 
   # refer to https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/create-a-container
