@@ -1,18 +1,21 @@
 defmodule Docker.Client do
   use HTTPoison.Base
+  @default_options [
+    hackney: Application.get_env(:docker_elixir, :ssl_options)
+  ]
+
+  def send_request(url, method, body \\ "", headers \\ [], opts \\ []) do
+    json_body = Poison.encode!(body)
+    json_headers = headers ++ [{"Content-Type", "application/json"}]
+    merged_opts = opts ++ @default_options
+    request!(method, url, json_body, json_headers, merged_opts)
+  end
 
   def process_response_body(body) do
     case Poison.decode(body) do
       {:ok, json} -> json
       _ -> body
     end
-  end
-
-  def post_json!(url, body \\ %{}, opts \\ []) do
-    post!( url, Poison.encode!(body), 
-          %{"Content-Type"=>"application/json"},
-          opts
-        )
   end
 
   # returns {:ok, connRef} if successful
@@ -36,6 +39,10 @@ defmodule Docker.Client do
 
   def add_query_params(url, params) do
     "#{url}?#{URI.encode_query(params)}"
+  end
+
+  defp merge_additional_opts(opts) do
+    
   end
 end
 

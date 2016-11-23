@@ -4,7 +4,7 @@ defmodule Docker.Container do
   def all(host, opts \\ %{}) do
     "#{host}/containers/json"
     |> Client.add_query_params(opts)
-    |> Client.get!
+    |> Client.send_request(:get)
     |> parse_all_response
   end
 
@@ -35,7 +35,7 @@ defmodule Docker.Container do
   # refer to https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/create-a-container
   def create(host, opts \\ @default_creation_params) do
     "#{host}/containers/create"
-    |> Client.post_json!(opts)
+    |> Client.send_request(:post, opts)
     |> parse_create_response
   end
 
@@ -45,7 +45,7 @@ defmodule Docker.Container do
 
   def start(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/start"
-    |> Client.post_json!(opts)
+    |> Client.send_request(:post, opts)
     |> parse_start_response
 
 
@@ -70,7 +70,7 @@ defmodule Docker.Container do
   def stop(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/stop"
     |> Client.add_query_params(opts)
-    |> Client.post_json!
+    |> Client.send_request(:post, opts)
     |> parse_stop_response 
   end
 
@@ -82,7 +82,7 @@ defmodule Docker.Container do
   def remove(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}"
     |> Client.add_query_params(opts)
-    |> Client.delete!
+    |> Client.send_request(:delete)
     |> parse_remove_response 
   end
 
@@ -102,7 +102,7 @@ defmodule Docker.Container do
 
   def exec_create(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/exec"
-    |> Client.post_json!(opts)
+    |> Client.send_request(:post, opts)
     |> parse_exec_create_response
   end
 
@@ -115,13 +115,13 @@ defmodule Docker.Container do
   # Docker.Container.exec_stream host, id, %{"Cmd" => ["rspec", "test.rb"], "AttachStdout" => true, "AttachStderr" => true}
   def exec_start(host, exec_id, %{"Detach" => true}) do
     "#{host}/exec/#{exec_id}/start"
-    |> Client.post_json!(%{"Detached" => true})
+    |> Client.send_request(:post, %{"Detach" => true})
     |> parse_exec_start_response
   end
 
   def exec_start(host, exec_id, opts) do
     "#{host}/exec/#{exec_id}/start"
-    |> Client.post_json!(opts, stream_to: self)
+    |> Client.send_request(:post, opts, [], [stream_to: self])
     |> parse_exec_start_response
   end
   # how to handle stream?
@@ -153,7 +153,7 @@ defmodule Docker.Container do
   def logs(host, container_id, opts \\%{stdout: 1, stderr: 1}) do
     "#{host}/containers/#{container_id}/logs"
     |> Client.add_query_params(opts)
-    |> Client.get!
+    |> Client.send_request(:get)
     |> parse_logs_response
   end
 
@@ -162,7 +162,7 @@ defmodule Docker.Container do
   def logs_stream(host, container_id, opts  \\ %{}) do
     "#{host}/containers/#{container_id}/logs"
     |> Client.add_query_params(opts)
-    |> Client.get!([], [stream_to: self])
+    |> Client.send_request(:get, [], [stream_to: self])
     |> parse_logs_stream_response
   end
 
