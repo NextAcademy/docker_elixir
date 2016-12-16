@@ -1,4 +1,8 @@
 defmodule Docker.Client do
+  @moduledoc """
+    This module handles formatting the HTTP requests/raw tcp connection
+  """
+
   use HTTPoison.Base
   @default_options [
     hackney: Application.get_env(:docker_elixir, :ssl_options)
@@ -39,10 +43,6 @@ defmodule Docker.Client do
 
   def add_query_params(url, params) do
     "#{url}?#{URI.encode_query(params)}"
-  end
-
-  defp merge_additional_opts(opts) do
-    
   end
 end
 

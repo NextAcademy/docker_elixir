@@ -1,20 +1,20 @@
 defmodule Docker.Container do
   alias Docker.Client
+  alias Docker.Client.Response
+  @moduledoc """
+    This is the Container module for all interactions with Docker containers. Also checks response from Docker remote api and returns {:ok, _} or {:error, reason}  as approiate
+  """
 
   def all(host, opts \\ %{}) do
     "#{host}/containers/json"
     |> Client.add_query_params(opts)
     |> Client.send_request(:get)
-    |> parse_all_response
+    |> Response.parse(:all)
   end
-
-  defp parse_all_response(%{status_code: 400}), do: {:error,:bad_parameter}
-  defp parse_all_response(%{status_code: 500}), do: {:error,:server_error}
-  defp parse_all_response(%{body: body}) when is_list(body), do:  {:ok, body}
 
   def list(host, opts \\ %{}) do
     case all(host, opts) do
-      {:ok, list} -> Enum.map(list, &(&1["Id"]))
+      {:ok, results} -> Enum.map(results, &(&1["Id"]))
       {:error, reason} -> {:error, reason}
     end
   end
@@ -36,29 +36,18 @@ defmodule Docker.Container do
   def create(host, opts \\ @default_creation_params) do
     "#{host}/containers/create"
     |> Client.send_request(:post, opts)
-    |> parse_create_response
+    |> Response.parse(:create)
   end
-
-  defp parse_create_response(%{status_code: 500}), do: {:error,:server_error}
-  defp parse_create_response(%{status_code: 404}), do: {:error,:no_such_image}
-  defp parse_create_response(%{body: %{"Id" => id}}), do: {:ok, %{id: id}}
 
   def start(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/start"
     |> Client.send_request(:post, opts)
-    |> parse_start_response
-
-
+    |> Response.parse(:start)
   end
-
-  defp parse_start_response(%{status_code: 204}), do: {:ok, :no_error}
-  defp parse_start_response(%{status_code: 304}), do: {:error, :container_already_started}
-  defp parse_start_response(%{status_code: 404}), do: {:error, :no_such_container}
-  defp parse_start_response(%{status_code: 500}), do: {:error, :server_error}
 
   def run(host, opts \\ @default_creation_params) do
     case create(host, opts) do
-      {:ok, %{id: id}} -> 
+      {:ok, %{id: id}} ->
         case start(host, id) do
           {:ok, _} -> {:ok, %{id: id}}
           {:error, reason} -> {:error, :reason}
@@ -71,31 +60,21 @@ defmodule Docker.Container do
     "#{host}/containers/#{container_id}/stop"
     |> Client.add_query_params(opts)
     |> Client.send_request(:post, opts)
-    |> parse_stop_response 
+    |> Response.parse(:stop)
   end
-
-  defp parse_stop_response(%{status_code: 204}), do: {:ok, :no_error}
-  defp parse_stop_response(%{status_code: 304}), do: {:error, :container_already_stopped}
-  defp parse_stop_response(%{status_code: 404}), do: {:error, :no_such_container}
-  defp parse_stop_response(%{status_code: 500}), do: {:error, :server_error}
 
   def remove(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}"
     |> Client.add_query_params(opts)
     |> Client.send_request(:delete)
-    |> parse_remove_response 
+    |> Response.parse(:remove)
   end
-
-  defp parse_remove_response(%{status_code: 204}), do: {:ok, :no_error}
-  defp parse_remove_response(%{status_code: 400}), do: {:error, :bad_parameter}
-  defp parse_remove_response(%{status_code: 404}), do: {:error, :no_such_container}
-  defp parse_remove_response(%{status_code: 409}), do: {:error, :conflict}
-  defp parse_remove_response(%{status_code: 500}), do: {:error, :server_error}
 
   def kill(host, container_id, stop_opts \\ %{}, remove_opts \\ %{}) do
     case stop(host, container_id, stop_opts) do
       {:ok, _} -> remove(host, container_id, remove_opts)
-      {:error, :container_already_stopped} -> remove(host, container_id, remove_opts)
+      {:error, :container_already_stopped} ->
+        remove(host, container_id, remove_opts)
       error_message -> error_message
     end
   end
@@ -103,33 +82,22 @@ defmodule Docker.Container do
   def exec_create(host, container_id, opts \\ %{}) do
     "#{host}/containers/#{container_id}/exec"
     |> Client.send_request(:post, opts)
-    |> parse_exec_create_response
+    |> Response.parse(:exec_create)
   end
-
-  defp parse_exec_create_response(%{status_code: 404}), do: {:error, :no_such_container}
-  defp parse_exec_create_response(%{status_code: 409}), do: {:error, :container_paused}
-  defp parse_exec_create_response(%{status_code: 500}), do: {:error, :server_error}
-  defp parse_exec_create_response(%{body: %{"Id" => id}}), do: {:ok, %{id: id}}
 
   # bash is not required to be prepended
   # Docker.Container.exec_stream host, id, %{"Cmd" => ["rspec", "test.rb"], "AttachStdout" => true, "AttachStderr" => true}
   def exec_start(host, exec_id, %{"Detach" => true}) do
     "#{host}/exec/#{exec_id}/start"
     |> Client.send_request(:post, %{"Detach" => true})
-    |> parse_exec_start_response
+    |> Response.parse(:exec_start)
   end
 
   def exec_start(host, exec_id, opts) do
     "#{host}/exec/#{exec_id}/start"
     |> Client.send_request(:post, opts, [], [stream_to: self])
-    |> parse_exec_start_response
+    |> Response.parse(:exec_start)
   end
-  # how to handle stream?
-  defp parse_exec_start_response(%{status_code: 200}), do: {:ok, :exec_successful}
-  defp parse_exec_start_response(%{status_code: 204}), do: {:ok, :streaming_started}
-  defp parse_exec_start_response(%{status_code: 404}), do: {:error, :no_such_container}
-  defp parse_exec_start_response(%{status_code: 409}), do: {:error, :container_paused}
-  defp parse_exec_start_response(%HTTPoison.AsyncResponse{id: ref}), do: {:ok, ref} 
 
   def exec_detached(host, container_id, create_opts \\ %{}) do
     case exec_create(host, container_id, create_opts) do
@@ -150,14 +118,14 @@ defmodule Docker.Container do
     end
   end
 
-  def logs(host, container_id, opts \\%{stdout: 1, stderr: 1}) do
+  def logs(host, container_id, opts \\ %{stdout: 1, stderr: 1}) do
     "#{host}/containers/#{container_id}/logs"
     |> Client.add_query_params(opts)
     |> Client.send_request(:get)
     |> parse_logs_response
   end
 
-  defp parse_logs_response(response), do: IO.inspect response 
+  def parse_logs_response(response), do: response
 
   def logs_stream(host, container_id, opts  \\ %{}) do
     "#{host}/containers/#{container_id}/logs"
@@ -199,16 +167,21 @@ defmodule Docker.Container do
 
   defp stream_response(output \\ []) do
     receive do
-      %HTTPoison.AsyncChunk{chunk: new_output} -> 
+      %HTTPoison.AsyncChunk{chunk: new_output} ->
         total_output = output ++ [new_output]
         stream_response(total_output)
       %HTTPoison.AsyncEnd{id: _ref} ->
-        Enum.map(output, fn(chunk) -> 
-          if String.printable?(chunk), do: chunk, else: String.split_at(chunk, 8) |> elem(1)
+        Enum.map(output, fn(chunk) ->
+          if String.printable?(chunk) do
+            chunk
+          else
+            chunk |> String.split_at(8) |> elem(1)
+          end
         end)
       _ ->
         stream_response(output)
     end
   end
+
 end
 
