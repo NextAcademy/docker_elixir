@@ -2,16 +2,12 @@ defmodule Docker.Client do
   @moduledoc """
     This module handles formatting the HTTP requests/raw tcp connection
   """
-
   use HTTPoison.Base
-  @default_options [
-    hackney: Application.get_env(:docker_elixir, :ssl_options)
-  ]
 
   def send_request(url, method, body \\ "", headers \\ [], opts \\ []) do
     json_body = Poison.encode!(body)
     json_headers = headers ++ [{"Content-Type", "application/json"}]
-    merged_opts = opts ++ @default_options
+    merged_opts = opts ++ default_options
     request!(method, url, json_body, json_headers, merged_opts)
   end
 
@@ -43,6 +39,10 @@ defmodule Docker.Client do
 
   def add_query_params(url, params) do
     "#{url}?#{URI.encode_query(params)}"
+  end
+
+  def default_options do
+    [hackney: Application.get_env(:docker_elixir, :ssl_options)]
   end
 end
 
