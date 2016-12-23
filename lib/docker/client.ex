@@ -30,13 +30,19 @@ defmodule Docker.Client do
   end
 
   def send_via_raw_tcp(data, connRef) do
-    socket = connRef |> :hackney.request_info |> List.last |> elem(1)
-    :gen_tcp.send(socket, data)
+    socket = connRef |> :hackney.request_info |> Keyword.get(:socket)
+    case socket do
+      {:ssl_socket, _tcp, _pid} -> :hackney_ssl.send(socket, data)
+      _ -> :hackney_tcp.send(socket, data)
+    end
   end
 
   def close_persistent_connection(connRef) do
-    socket = connRef |> :hackney.request_info |> List.last |> elem(1)
-    :gen_tcp.close(socket)
+    socket = connRef |> :hackney.request_info |> Keyword.get(:socket)
+    case socket do
+      {:ssl_socket, _tcp, _pid} -> :hackney_ssl.close(socket)
+      _ -> :hackney_tcp.close(socket)
+    end
   end
 
   def add_query_params(url, params) do
