@@ -23,9 +23,9 @@ defmodule Docker.Client do
     body = ""
     headers = [{"Content-Type", "application/json"}]
     method = :post
-    opts = [:async, {:stream_to, receiving_pid}, {:connect_timeout, :infinity}, {:recv_timeout, :infinity}]
+    opts = [:async, connect_timeout: :infinity, recv_timeout: :infinity, active: true, stream_to: receiving_pid]
     ssl_opts = Application.get_env(:docker_elixir, :ssl_options)
-    all_opts = opts ++ ssl_opts
+    all_opts = opts ++ [ssl_options: ssl_opts]
     :hackney.request(method, url, headers, body, all_opts)
   end
 
