@@ -20,11 +20,13 @@ defmodule Docker.Client do
 
   # returns {:ok, connRef} if successful
   def start_persistent_connection(url, receiving_pid) do
-   body = ""
-   headers = [{"Content-Type", "application/json"}]
-   method = :post
-   opts = [:async, {:stream_to, receiving_pid}, {:connect_timeout, :infinity}, {:recv_timeout, :infinity}]
-   :hackney.request(method, url, headers, body, opts)
+    body = ""
+    headers = [{"Content-Type", "application/json"}]
+    method = :post
+    opts = [:async, {:stream_to, receiving_pid}, {:connect_timeout, :infinity}, {:recv_timeout, :infinity}]
+    ssl_opts = Application.get_env(:docker_elixir, :ssl_options)
+    all_opts = opts ++ ssl_opts
+    :hackney.request(method, url, headers, body, all_opts)
   end
 
   def send_via_raw_tcp(data, connRef) do
