@@ -42,7 +42,11 @@ defmodule Docker.Client do
   end
 
   def default_options do
-    [hackney: Application.get_env(:docker_elixir, :ssl_options)]
+    [hackney:
+     [ssl_options:
+       Application.get_env(:docker_elixir, :ssl_options)
+     ]
+   ]
   end
 end
 
