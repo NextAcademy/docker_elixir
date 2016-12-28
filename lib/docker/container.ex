@@ -33,9 +33,9 @@ defmodule Docker.Container do
   }
 
   # refer to https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/create-a-container
-  def create(host, opts \\ @default_creation_params) do
+  def create(host, opts) do
     "#{host}/containers/create"
-    |> Client.send_request(:post, opts)
+    |> Client.send_request(:post, Map.merge(@default_creation_params, opts))
     |> Response.parse(:create)
   end
 
@@ -45,7 +45,7 @@ defmodule Docker.Container do
     |> Response.parse(:start)
   end
 
-  def run(host, opts \\ @default_creation_params) do
+  def run(host, opts) do
     case create(host, opts) do
       {:ok, %{id: id}} ->
         case start(host, id) do
