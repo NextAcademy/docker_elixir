@@ -53,7 +53,10 @@ defmodule Docker.Client do
     [hackney:
      [ssl_options:
        Application.get_env(:docker_elixir, :ssl_options)
-     ]
+     ],
+    connect_timeout: 5000,
+    recv_timeout: 30000,
+    timeout: 30000
    ]
   end
 end
