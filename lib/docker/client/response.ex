@@ -15,7 +15,7 @@ defmodule Docker.Client.Response do
 
   def parse(%{status_code: 204}, :stop), do: {:ok, :no_error}
 
-  def parse(%{status_code: 204}, :stop), do: {:ok, :no_error}
+  def parse(%{status_code: 304}, :stop), do: {:error, :container_already_stopped}
 
   def parse(%{status_code: 204}, :remove), do: {:ok, :no_error}
 
