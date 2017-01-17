@@ -2,7 +2,7 @@ defmodule Docker.Container do
   alias Docker.Client
   alias Docker.Client.Response
   @moduledoc """
-    This is the Container module for all interactions with Docker containers. Also checks response from Docker remote api and returns {:ok, _} or {:error, reason}  as approiate
+    This is the Container module for all interactions with Docker containers.
   """
 
   def all(host, opts \\ %{}) do
