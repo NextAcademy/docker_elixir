@@ -122,7 +122,7 @@ defmodule Docker.ContainerWorker do
 
   defp create_container(opts \\ %{}) do
     try do
-      merge_opts = Map.merge(@default_container_opts, opts)
+      merged_opts = Map.merge(@default_container_opts, opts)
       {:ok, %{id: container_id}} = Container.run host, merged_opts
       ContainerRegistry.register_worker(self, container_id)
       {:ok, container_id}
