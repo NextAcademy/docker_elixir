@@ -28,7 +28,7 @@ defmodule Docker.RequestMap do
       current
       |> Enum.find(fn {_key, val} -> val == %{request: request_pid} end)
       |> case do
-          {worker_pid. _val} -> worker_pid
+          {worker_pid, _val} -> worker_pid
           nil -> nil
          end
       end)
