@@ -93,7 +93,7 @@ defmodule Docker.ContainerWorker do
   end
 
   def terminate(:shutdown, state), do: kill_container(state)
-  def terminate(:shutdown, _exit_reason}, state), do: kill_container(state)
+  def terminate({:shutdown, _exit_reason}, state), do: kill_container(state)
 
 
   def handle_info({:hackney_response, _conn, message}, state) when is_binary(message) do

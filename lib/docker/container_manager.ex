@@ -18,6 +18,6 @@ defmodule Docker.ContainerManager do
       worker(Docker.ContainerWorker, [], restart: :temporary)
     ]
 
-    supervise(children, startegy: :simple_one_for_one)
+    supervise(children, strategy: :simple_one_for_one)
   end
 end
