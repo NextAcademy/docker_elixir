@@ -43,7 +43,7 @@ defmodule Docker.ContainerWorker do
 
   ### Server Callbacks
   def init(opts \\ %{}) do
-    {:ok, timer_ref} = set_keep_alive_timer
+    {:ok, timer_ref} = set_keep_alive_timer()
     case create_container(opts) do
       {:ok, container_id} ->
         {:ok, %{timer: timer_ref, container_id: container_id}}
@@ -55,7 +55,7 @@ defmodule Docker.ContainerWorker do
   def handle_call({:exec, commands}, _from, state) do
     try do
       container_id = Map.get(state, :container_id)
-      json = Container.exec_stream(host, container_id,
+      json = Container.exec_stream(host(), container_id,
                                    %{
                                      "Cmd" => commands,
                                      "AttachStdout" => true,
@@ -71,7 +71,7 @@ defmodule Docker.ContainerWorker do
 
   def handle_cast({:exec_detached, commands}, state) do
     container_id = Map.get(state, :container_id)
-    Container.exec_detached(host, container_id,
+    Container.exec_detached(host(), container_id,
                             %{
                               "Cmd" => commands
                              }
@@ -85,7 +85,7 @@ defmodule Docker.ContainerWorker do
         Container.stream_stdin(stdin, connRef)
         {:noreply, reset_timer(state)}
       %{container_id: container_id} ->
-        {:ok, %{connRef: connRef}} = Container.attach(host, container_id, self)
+        {:ok, %{connRef: connRef}} = Container.attach(host(), container_id, self())
         Container.stream_stdin(stdin, connRef)
         new_state = Map.put(state, :persistent_conn, connRef)
         {:noreply, reset_timer(new_state)}
@@ -97,7 +97,7 @@ defmodule Docker.ContainerWorker do
 
 
   def handle_info({:hackney_response, _conn, message}, state) when is_binary(message) do
-    Docker.RequestMap.whereis_request(self)
+    Docker.RequestMap.whereis_request(self())
     |> send({:stdout, message})
     {:noreply, state}
   end
@@ -108,12 +108,12 @@ defmodule Docker.ContainerWorker do
 
   defp reset_timer(state = %{timer: timer_ref}) do
     :timer.cancel(timer_ref)
-    {:ok, new_timer_ref} = set_keep_alive_timer
+    {:ok, new_timer_ref} = set_keep_alive_timer()
     %{state | timer: new_timer_ref}
   end
 
   defp set_keep_alive_timer do
-    :timer.apply_after(@default_timeout, GenServer, :stop, [self, {:shutdown, :timeout}])
+    :timer.apply_after(@default_timeout, GenServer, :stop, [self(), {:shutdown, :timeout}])
   end
 
   defp host do
@@ -123,8 +123,8 @@ defmodule Docker.ContainerWorker do
   defp create_container(opts \\ %{}) do
     try do
       merged_opts = Map.merge(@default_container_opts, opts)
-      {:ok, %{id: container_id}} = Container.run host, merged_opts
-      ContainerRegistry.register_worker(self, container_id)
+      {:ok, %{id: container_id}} = Container.run host(), merged_opts
+      ContainerRegistry.register_worker(self(), container_id)
       {:ok, container_id}
     rescue
       reason ->
@@ -138,7 +138,7 @@ defmodule Docker.ContainerWorker do
    end
 
    defp kill_container(%{container_id: container_id}) do
-     case Container.kill(host, container_id) do
+     case Container.kill(host(), container_id) do
        {:ok, _ } ->
          IO.puts "Container #{container_id} shutdown"
         %{"message" => message} ->

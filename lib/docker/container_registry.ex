@@ -7,7 +7,7 @@ defmodule Docker.ContainerRegistry do
   end
 
   def register_worker(worker_pid, container_id) do
-    Genserver.cast(
+    GenServer.cast(
                    __MODULE__,
                    {:register_worker, worker_pid, container_id}
                  )
@@ -18,11 +18,11 @@ defmodule Docker.ContainerRegistry do
   end
 
   def init(:ok) do
-    case Docker.Container.list(host) do
+    case Docker.Container.list(host()) do
       {:error, _reason} ->
         {:ok, %{}}
       ids ->
-        Enum.each(ids, &Docker.Container.kill(host, &1))
+        Enum.each(ids, &Docker.Container.kill(host(), &1))
         {:ok, %{}}
     end
   end
@@ -48,7 +48,7 @@ defmodule Docker.ContainerRegistry do
             IO.inspect reason
         end
         Process.demonitor(ref)
-        new_state = state |> Map.delte(pid)
+        new_state = state |> Map.delete(pid)
         {:noreply, new_state}
       _ -> 
         {:noreply, state}
