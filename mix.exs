@@ -14,9 +14,9 @@ defmodule Docker.Mixfile do
 
   def package do
     [
-      maintainers: ["Aiman"],
+      maintainers: ["Ming Xiang Chan"],
       licenses: ["GPL"],
-      links: %{"Github" => "https://github.com/Hinsei/docker_elixir.git", branch: "feat/mass_moving"}
+      links: %{"Github" => "https://github.com/NextAcademy/docker_elixir"}
     ]
   end
   # Configuration for the OTP application

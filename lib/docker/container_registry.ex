@@ -41,7 +41,7 @@ defmodule Docker.ContainerRegistry do
     case Map.get(state, pid) do
       {container_id,  ^ref} ->
         try do
-          Container.kill(host, container_id)
+          Container.kill(host(), container_id)
         rescue
           reason ->
             IO.puts "Error Killing Container"
