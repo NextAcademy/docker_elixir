@@ -39,7 +39,7 @@ defmodule Docker.Mixfile do
     [
       {:poison, "~> 2.0"},
       {:credo, "~> 0.5"},
-      {:httpoison, "~> 0.9.0"}
+      {:httpoison, "~> 0.13"}
     ]
   end
 end
