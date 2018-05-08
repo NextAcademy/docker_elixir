@@ -8,7 +8,7 @@ defmodule Docker.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      description: "Api wrapper for Docker API in Elixir",
-     package: package,
+     package: package(),
      deps: deps()]
   end
 
